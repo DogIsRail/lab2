@@ -1,0 +1,65 @@
+version: '3.8'
+services:
+    
+  app:
+    build: ./app/
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=database
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - test
+    volumes:
+      - ./app/:/lab_2/app
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgAdmin@client.com
+      PGADMIN_DEFAULT_PASSWORD: pgAdmin
+    ports:
+      - "5050:80"
+    networks:
+      - test
+
+  db:
+    image: postgres:14.1-alpine
+    user: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=database
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test
+      
+  flyway:
+    image: flyway/flyway
+    command:
+      -url=jdbc:postgresql://db:5432/database -user=postgres -password=postgres -baselineOnMigrate=true migrate
+    volumes:
+      - .:/flyway/sql
+    depends_on:
+      - db
+    networks:
+      - test
+
+
+  
+networks:
+  test:
