@@ -250,7 +250,9 @@ while True:
 
 
         # the query for 6 variant
-        query = """SELECT la.RegName, st.YearTest, MIN(t.Ball100) FROM student st
+        while True:
+            try:
+                query = """SELECT la.RegName, st.YearTest, MIN(t.Ball100) FROM student st
 JOIN test t
 ON t.student_id = st.OUTID
 JOIN living_area la
@@ -258,10 +260,14 @@ ON la.living_area_id = st.living_area_id
                     WHERE TestStatus = 'Зараховано'
                     AND test_name = 'Історія України'
                     GROUP BY la.RegName, st.YearTest"""
+                    
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                break
+            except psycopg2.errors.UndefinedTable as err:
+                time.sleep(1)
         
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        
+
         #writing the files with results of the query
         with open('query_result.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
